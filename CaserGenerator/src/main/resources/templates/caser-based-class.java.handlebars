@@ -1,0 +1,274 @@
+package {{{packageName}}};
+
+
+/**
+ * {{doc}}.
+ */
+{{{modifiers}}}{{#modifiers}} {{/modifiers}}abstract class {{{name}}} {
+	private {{{name}}}() {}
+
+	/**
+	 * Interface for objects that accept a value of {@link {{name~}} } for further processing.
+	 */
+	public interface Acceptor {
+		/**
+		 * Accepts the specified {@link {{name~}} } value for further processing.
+		 * 
+		 * @param valueOf{{{name}}}
+		 *            A {@link {{name~}} } value being submitted for further processing
+		 */
+		void accept{{{name}}}({{{name}}} valueOf{{{name}}});
+	}
+
+	/**
+	 * A suite of void methods to be called for each variant of {@link {{name~}} }.
+	 * <p>
+	 * By default, each method corresponding to a variant of {@link {{name~}} } calls a common {@link #unhandled} method, while the {@link #unhandled} method itself is a no-op. This class can thus be implemented so that it handles a small number of variants, and then performs some other action (such as throw an exception) if the given value is not of any interest. A method can also call {@link #unhandled} itself (exiting immediately afterward) to allow a case to fall through conditionally.
+	 * <p>
+	 * {@link Functions} is a counterpart to this class that allows returning a value.
+	 */
+	public static class Actions {
+		{{#cases}}
+
+		/**
+		 * Handles {@link {{name~}} }: {{doc}}.
+		 * 
+		 * @param valueOf{{{../name}}}
+		 *            The {@link {{../name~}} } value that is currently being handled
+		 {{#parameters}}
+		 * @param {{name}}
+		 *            {{doc}}
+		 {{/parameters}}
+		 */
+		public void if{{name}}(Cases.{{name}} valueOf{{{../name}}}{{#parameters}}, {{type}} {{name}}{{/parameters}}) {
+			unhandled(valueOf{{{../name}}});
+		}
+
+		{{/cases}}
+
+		/**
+		 * Called when none of the cases elects to provide handling for the given value.
+		 * 
+		 * @param valueOf{{{name}}}
+		 *            The {@link {{name~}} } value that is currently being
+		 *            handled
+		 */
+		public void unhandled({{{name}}} valueOf{{{name}}}) {
+		}
+	}
+
+	/**
+	 * Classes representing the possible variants of {@link {{name~}} }.
+	 */
+	public static final class Cases {
+		private Cases() {
+		}
+
+		{{#cases}}
+		/**
+		 * {{doc}}.
+		 */
+		public static final class {{name}} extends {{{../name}}} {
+
+			private {{name}}({{#parameters}}{{#unless @first}}, {{/unless}}{{type}} {{name}}{{/parameters}}) {
+				{{#parameters}}
+				this.p_{{name}} = {{name}};
+				{{/parameters}}
+			}
+
+			{{#parameters}}
+			private final {{type}} p_{{name}};
+
+			/**
+			 * Returns {@code {{name~}} }: {{doc}}.
+			 * 
+			 * @return {{doc}}
+			 */
+			public {{type}} {{name}}() {
+				return p_{{name}};
+			}
+
+			{{/parameters}}
+
+			/**
+			 * Returns a new {@link {{name~}} } with the given parameters.
+			 * 
+			 {{#parameters}}
+			 * @param {{name}}
+			 *            {{doc}}
+			 {{/parameters}}
+			 * @return a new {@link {{name~}} } with the given parameters
+			 */
+			public static final {{name}} of({{#parameters}}{{#unless @first}}, {{/unless}}{{type}} {{name}}{{/parameters}}) {
+				return new {{name}}({{#parameters}}{{#unless @first}}, {{/unless}} {{name}}{{/parameters}});
+			}
+
+			@Override
+			public {{name}} as{{name}}() {
+				return this;
+			}
+
+			@Override
+			public void handle(Actions handler) {
+				handler.if{{name}}(this{{#parameters}}, p_{{name}}{{/parameters}});
+			}
+
+			@Override
+			public <T> T handle(Functions<T> functions) {
+				return functions.if{{name}}(this{{#parameters}}, p_{{name}}{{/parameters}});
+			}
+
+			@Override
+			public String toString() {
+				return "{{{name}}}(" +
+					{{#parameters}}
+					"{{#unless @first}}, {{/unless}}{{name}}=" + p_{{name}} +
+					{{/parameters}}
+					")";
+			}
+		}
+
+		{{/cases}}
+	}
+
+	/**
+	 * A suite of value-returning methods to be called for each variant of
+	 * {@link {{name~}} }.
+	 * <p>
+	 * By default, all implementations of methods in {@link Functions} call a common {@link #unhandled} method, while the {@link #unhandled} method itself is a no-op that returns {@code null}. This class can thus be implemented so that it handles a small number of variants, and then performs some other action (such as throw an exception) if the given value is not of any interest. A method can also return {@link #unhandled} itself to allow a case to fall through conditionally.
+	 * <p>
+	 * {@link Actions} is a counterpart to this class that disallows returning a value.
+	 */
+	public static class Functions<T> {
+
+		{{#cases}}
+
+		/**
+		 * Handles {@link {{name~}} }: {{doc}}.
+		 * 
+		 * @param valueOf{{{name}}}
+		 *            The {@link {{name~}} } value that is currently being handled
+		 {{#parameters}}
+		 * @param {{name}}
+		 *            {{doc}}
+		 {{/parameters}}
+		 * @return The result as defined by a subclass, or the result of calling {@link #unhandled} if this method is not overridden
+		 */
+		public T if{{name}}(Cases.{{name}} valueOf{{{name}}}{{#parameters}}, {{type}} {{name}}{{/parameters}}) {
+			return unhandled(valueOf{{{name}}});
+		}
+
+		{{/cases}}
+
+		/**
+		 * Called when none of the cases elects to provide handling for the given value.
+		 * 
+		 * @param valueOf{{{name}}}
+		 *            The {@link {{name~}} } value that is currently being
+		 *            handled
+		 */
+		public T unhandled({{{name}}} valueOf{{{name}}}) {
+			return null;
+		}
+	}
+
+	/**
+	 * Interface for objects whose methods work by, or as if by, generating a {@link {{name~}} } object having the specified parameters, then issuing the object to have an action performed on it.
+	 * <p>
+	 * The methods {@link {{{name}}}#supplierTo(Acceptor)} et al. do most of what anyone would care to do by implementing this interface.
+	 */
+	public interface Issuer {
+
+		{{#cases}}
+
+		/**
+		 * Issues {@link {{name~}} }: {{doc}}.
+		 * 
+		 {{#parameters}}
+		 * @param {{name}}
+		 *            {{doc}}
+		 {{/parameters}}
+		 */
+		void do{{name}}({{#parameters}}{{#unless @first}}, {{/unless}}{{type}} {{name}}{{/parameters}});
+
+		{{/cases}}
+	}
+
+	private static final class Supplier implements Issuer {
+		private final Acceptor acceptor;
+
+		private Supplier(Acceptor acceptor) {
+			if (acceptor == null) {
+				throw new NullPointerException();
+			}
+			this.acceptor = acceptor;
+		}
+
+		{{#cases}}
+
+		@Override
+		public void do{{name}}({{#parameters}}{{#unless @first}}, {{/unless}}{{type}} {{name}}{{/parameters}}) {
+			acceptor.accept{{{../name}}}(new Cases.{{name}}({{#parameters}}{{#unless @first}}, {{/unless}}{{name}}{{/parameters}}));
+		}
+
+		{{/cases}}
+	}
+
+	/**
+	 * Returns an issuer that generates {@link {{name~}} } objects and submits them to the specified acceptor.
+	 * 
+	 * @param acceptor
+	 *            An acceptor to which calls on the new issuer will be submitted
+	 * @return an {@link Issuer} whose commands are submitted, using {@link Acceptor#accept{{{name}}}({{{name}}})}, to the specified {@link Acceptor}
+	 */
+	public static Issuer supplierTo(Acceptor acceptor) {
+		return new Supplier(acceptor);
+	}
+
+	/**
+	 * Returns an issuer that generates {@link {{name~}} } objects and adds them to the specified collection.
+	 * 
+	 * @param coll
+	 *            A collection to which calls on the new issuer will be added
+	 * @return an {@link Issuer} whose commands are added, using {@link java.util.Collection#add(Object)}, to the specified {@link java.util.Collection}
+	 */
+	public static Issuer supplierTo(final java.util.Collection<? super {{{name}}}> coll) {
+		return supplierTo(new Acceptor() {
+			@Override
+			public void accept{{{name}}}({{{name}}} valueOf{{{name}}}) {
+				coll.add(valueOf{{{name}}});
+			}
+		});
+	}
+
+	{{#cases}}
+
+	/**
+	 * Returns this object as a {@link {{name~}} }.
+	 * 
+	 * @return This object, if it is a {@link {{name~}} }; otherwise, {@code null}.
+	 */
+	public Cases.{{name}} as{{name}}() {
+		return null;
+	}
+
+	{{/cases}}
+
+	/**
+	 * Calls the correct method on a handler object to handle this value.
+	 * 
+	 * @param handler
+	 *            An {@link Actions} object whose method corresponding to this instance's type is called
+	 */
+	public abstract void handle(Actions handler);
+
+	/**
+	 * Calls the correct method on a functions object to process this value and
+	 * return a result.
+	 * 
+	 * @param handler
+	 *            A {@link Functions} object whose method corresponding to this instance's type is called
+	 * @return The result as defined by the implementing class
+	 */
+	public abstract <T> T handle(Functions<T> handler);
+}
