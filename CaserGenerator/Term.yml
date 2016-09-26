@@ -4,7 +4,7 @@ doc: A term in an LCE
 modifiers: public
 cases:
   - name: Var
-    #doc: A variable in an LCE
+    doc: A variable in an LCE
     parameters:
       - name: name
         type: String
