@@ -8,7 +8,12 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 class Slurp {
+	private static final Logger log = LoggerFactory.getLogger(Slurp.class);
+	
 	private static final int SLURP_BUFFER_SIZE_BYTES = 4096;
 	private static final int SLURP_BUFFER_SIZE_CHARS = SLURP_BUFFER_SIZE_BYTES >> 1;
 

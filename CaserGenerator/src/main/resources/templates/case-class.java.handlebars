@@ -5,6 +5,7 @@ package {{{packageName}}};
  * {{doc}}.
  */
 {{{modifiers}}}{{#modifiers}} {{/modifiers}}abstract class {{{name}}} {
+
 	private {{{name}}}() {}
 
 	/**
@@ -20,28 +21,53 @@ package {{{packageName}}};
 		void accept{{{name}}}({{{name}}} valueOf{{{name}}});
 	}
 
+
+
+	{{#handlers}}
 	/**
-	 * A suite of void methods to be called for each variant of {@link {{name~}} }.
+	 * {{doc}}.
+	 * This is a suite of
+	 * {{#if returnsVoid}}void methods
+	 {{else if returnsPrimitive}}{@code {{returns~}} }-returning methods
+	 {{else if returnsGeneric}}{@code {{returns~}} }-returning methods
+	 {{else}}{@link {{returns~}} }-returning methods
+	 {{/if~}}	
+	 * to be called for each variant of {@link {{../name~}} }{{#if throws}}, 
+	 * each of which may throw {{#throwsInEnglish}}{{prefix}}{@link {{phrase~}} }{{suffix}}{{/throwsInEnglish}}{{/if}}.
 	 * <p>
-	 * By default, each method corresponding to a variant of {@link {{name~}} } calls a common {@link #unhandled} method, while the {@link #unhandled} method itself is a no-op. This class can thus be implemented so that it handles a small number of variants, and then performs some other action (such as throw an exception) if the given value is not of any interest. A method can also call {@link #unhandled} itself (exiting immediately afterward) to allow a case to fall through conditionally.
-	 * <p>
-	 * {@link Functions} is a counterpart to this class that allows returning a value.
+
+	 * By default, each method corresponding to a variant of {@link {{../name~}} } calls a common {@link #unhandled}
+	 * method, while the {@link #unhandled} method itself is a no-op{{#if returnsValue}} which returns
+	 * {@code {{default~}} }{{/if}}. This class can thus be implemented so that it handles a small number of variants,
+	 * and then performs some other action (such as throw an exception) if the given value is not of any interest. A
+	 * method can also {{#if returnsValue}}return {@link #unhandled} itself{{else}}call {@link #unhandled} itself,
+	 * returning immediately afterward,{{/if}} to allow a case to fall through conditionally.
+	 {{#if returnsGeneric}}
+	 *
+	 * @param <{{{returns}}}> The type of value to be returned by each handler
+	 {{/if}}
 	 */
-	public static class Actions {
+	public static class {{{name}}}{{#if returnsGeneric}}<{{{returns}}}>{{/if}} {
 		{{#cases}}
 
 		/**
 		 * Handles {@link {{name~}} }: {{doc}}.
 		 * 
-		 * @param valueOf{{{../name}}}
-		 *            The {@link {{../name~}} } value that is currently being handled
+		 * @param valueOf{{{../../name}}}
+		 *            The {@link {{../../name~}} } value that is currently being handled
 		 {{#parameters}}
 		 * @param {{name}}
 		 *            {{doc}}
 		 {{/parameters}}
+		 {{#if returnsValue}}
+		 * @return The value to be returned from the {@link {{../../name}}#handle({{../name}})} method
+		 {{/if}}
+		 {{#throws}}
+		 * @throws {{.}}
+		 {{/throws}} 
 		 */
-		public void if{{name}}(Cases.{{name}} valueOf{{{../name}}}{{#parameters}}, {{type}} {{name}}{{/parameters}}) {
-			unhandled(valueOf{{{../name}}});
+		public {{returns}} if{{name}}(Cases.{{name}} valueOf{{{../../name}}}{{#parameters}}, {{type}} {{name}}{{/parameters}}){{#if throws}} throws {{#throws}}{{#unless @first}}, {{/unless}}{{.}}{{/throws}}{{/if}} {
+			{{#returnsValue}}return {{/returnsValue}}unhandled(valueOf{{{../../name}}});
 		}
 
 		{{/cases}}
@@ -49,13 +75,23 @@ package {{{packageName}}};
 		/**
 		 * Called when none of the cases elects to provide handling for the given value.
 		 * 
-		 * @param valueOf{{{name}}}
-		 *            The {@link {{name~}} } value that is currently being
+		 * @param valueOf{{{../name}}}
+		 *            The {@link {{../name~}} } value that is currently being
 		 *            handled
+		 {{#if returnsValue}}
+		 * @return The value to be returned from the {@link {{../name}}#handle({{name}})} method
+		 {{/if}}
+		 {{#throws}}
+		 * @throws {{.}}
+		 {{/throws}} 
 		 */
-		public void unhandled({{{name}}} valueOf{{{name}}}) {
+		public {{returns}} unhandled({{{../name}}} valueOf{{{../name}}}){{#if throws}} throws {{#throws}}{{#unless @first}}, {{/unless}}{{.}}{{/throws}}{{/if}} {
+			{{#returnsValue}}return {{default}};{{/returnsValue}}
 		}
 	}
+
+	{{/handlers}}
+
 
 	/**
 	 * Classes representing the possible variants of {@link {{name~}} }.
@@ -64,7 +100,9 @@ package {{{packageName}}};
 		private Cases() {
 		}
 
+
 		{{#cases}}
+
 		/**
 		 * {{doc}}.
 		 */
@@ -108,15 +146,14 @@ package {{{packageName}}};
 				return this;
 			}
 
+			{{#handlers}}
+			
 			@Override
-			public void handle(Actions handler) {
-				handler.if{{name}}(this{{#parameters}}, p_{{name}}{{/parameters}});
+			public{{#if returnsGeneric}} <{{returns}}>{{/if}} {{returns}} handle({{name}}{{#if returnsGeneric}}<{{returns}}>{{/if}} handler){{#if throws}} throws {{#throws}}{{#unless @first}}, {{/unless}}{{.}}{{/throws}}{{/if}} {
+				{{#returnsValue}}return {{/returnsValue}}handler.if{{../name}}(this{{#parameters}}, p_{{name}}{{/parameters}});
 			}
-
-			@Override
-			public <T> T handle(Functions<T> functions) {
-				return functions.if{{name}}(this{{#parameters}}, p_{{name}}{{/parameters}});
-			}
+			
+			{{/handlers}}
 
 			@Override
 			public String toString() {
@@ -129,48 +166,10 @@ package {{{packageName}}};
 		}
 
 		{{/cases}}
+
 	}
 
-	/**
-	 * A suite of value-returning methods to be called for each variant of
-	 * {@link {{name~}} }.
-	 * <p>
-	 * By default, all implementations of methods in {@link Functions} call a common {@link #unhandled} method, while the {@link #unhandled} method itself is a no-op that returns {@code null}. This class can thus be implemented so that it handles a small number of variants, and then performs some other action (such as throw an exception) if the given value is not of any interest. A method can also return {@link #unhandled} itself to allow a case to fall through conditionally.
-	 * <p>
-	 * {@link Actions} is a counterpart to this class that disallows returning a value.
-	 */
-	public static class Functions<T> {
 
-		{{#cases}}
-
-		/**
-		 * Handles {@link {{name~}} }: {{doc}}.
-		 * 
-		 * @param valueOf{{{name}}}
-		 *            The {@link {{name~}} } value that is currently being handled
-		 {{#parameters}}
-		 * @param {{name}}
-		 *            {{doc}}
-		 {{/parameters}}
-		 * @return The result as defined by a subclass, or the result of calling {@link #unhandled} if this method is not overridden
-		 */
-		public T if{{name}}(Cases.{{name}} valueOf{{{name}}}{{#parameters}}, {{type}} {{name}}{{/parameters}}) {
-			return unhandled(valueOf{{{name}}});
-		}
-
-		{{/cases}}
-
-		/**
-		 * Called when none of the cases elects to provide handling for the given value.
-		 * 
-		 * @param valueOf{{{name}}}
-		 *            The {@link {{name~}} } value that is currently being
-		 *            handled
-		 */
-		public T unhandled({{{name}}} valueOf{{{name}}}) {
-			return null;
-		}
-	}
 
 	/**
 	 * Interface for objects whose methods work by, or as if by, generating a {@link {{name~}} } object having the specified parameters, then issuing the object to have an action performed on it.
@@ -193,6 +192,7 @@ package {{{packageName}}};
 
 		{{/cases}}
 	}
+		
 
 	private static final class Supplier implements Issuer {
 		private final Acceptor acceptor;
@@ -213,6 +213,8 @@ package {{{packageName}}};
 
 		{{/cases}}
 	}
+
+
 
 	/**
 	 * Returns an issuer that generates {@link {{name~}} } objects and submits them to the specified acceptor.
@@ -254,21 +256,22 @@ package {{{packageName}}};
 
 	{{/cases}}
 
+	{{#handlers}}
+	
 	/**
-	 * Calls the correct method on a handler object to handle this value.
-	 * 
+	 * Calls a method on the given handler to process this value{{#if returnsValue}} and return a result{{/if}}.
+	 *
 	 * @param handler
-	 *            An {@link Actions} object whose method corresponding to this instance's type is called
+	 *            A handler object whose method corresponding to this instance's type is called
+	 {{#if returnsValue}}
+	 * @return The result of processing as defined by the implementing class
+	 {{/if}}
+	 {{#throws}}
+	 * @throws {{.}} As defined by the implementing class
+	 {{/throws}}
 	 */
-	public abstract void handle(Actions handler);
+	public abstract{{#if returnsGeneric}} <{{returns}}>{{/if}} {{returns}} handle({{name}}{{#if returnsGeneric}}<{{returns}}>{{/if}} handler){{#if throws}} throws {{#throws}}{{#unless @first}}, {{/unless}}{{.}}{{/throws}}{{/if}};
+	
+	{{/handlers}}
 
-	/**
-	 * Calls the correct method on a functions object to process this value and
-	 * return a result.
-	 * 
-	 * @param handler
-	 *            A {@link Functions} object whose method corresponding to this instance's type is called
-	 * @return The result as defined by the implementing class
-	 */
-	public abstract <T> T handle(Functions<T> handler);
 }
